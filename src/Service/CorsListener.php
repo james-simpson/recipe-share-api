@@ -41,8 +41,12 @@ class CorsListener implements EventSubscriberInterface
 
 		$responseHeaders = $event->getResponse()->headers;
 	    $responseHeaders->set('Access-Control-Allow-Headers', 'origin, content-type, accept, credentials');
-	    $responseHeaders->set('Access-Control-Allow-Origin', 'http://localhost:8080');
 	    $responseHeaders->set('Access-Control-Allow-Credentials', 'true');
 	    $responseHeaders->set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, PATCH, OPTIONS');
+
+	    $trustedDomains = ['http://localhost:5000', 'http://localhost:8080', 'https://recipe-library.herokuapp.com'];
+	    if (in_array($_SERVER['HTTP_ORIGIN'], $trustedDomains)) {
+	    	$responseHeaders->set('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+	    }
 	}
 }
