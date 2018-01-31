@@ -193,9 +193,9 @@ class Recipe
 	 * Create from array
 	 * @param $array
 	 */
-	public function fromArray($array){
+	public function fromArray($array) {
 	    foreach ($array as $name => $value) {
-	        if (isset($this->$name) && $name !== 'id'){
+	        if (property_exists($this, $name) && $name !== 'id'){
 	            $this->$name = $value;
 	        }
 	    }
