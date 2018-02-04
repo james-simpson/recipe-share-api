@@ -14,6 +14,8 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Config\Definition\Exception\Exception;
 
+use Aws\S3\S3Client;
+
 use App\Entity\Recipe;
 
 class RecipeController extends Controller
@@ -93,5 +95,33 @@ class RecipeController extends Controller
     	}
 
     	return new JsonResponse(array('status' => 'success'));
+    }
+
+    /**
+     * @Route("/api/recipes/{id}/image")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function uploadImageAction($id, Request $request) {
+        try {
+            $file = $request->files->get('file');
+        } catch ( Exception $e ) {
+            return new JsonResponse([], 400);
+        }
+
+        // name the file with a unique id
+        $imageId = md5(uniqid());
+        $fileName = $imageId . '.' . $file->guessExtension();
+
+        // upload the image to an Amazon S3 bucket
+        $s3 = S3Client::factory(['version' => 'latest', 'region' => 'eu-west-2', 'signature' => 'v4']);
+        $bucket = getenv('S3_BUCKET');
+        $upload = $s3->upload(
+            $bucket,
+            $fileName,
+            fopen($file, 'rb'),
+            'public-read'
+        );
+
+        return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));
     }
 }
