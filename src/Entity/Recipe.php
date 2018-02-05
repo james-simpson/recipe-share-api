@@ -32,6 +32,11 @@ class Recipe
     private $image;
 
     /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $servings;
+
+    /**
      * @ORM\Column(type="text")
      */
     private $ingredients;
@@ -104,6 +109,16 @@ class Recipe
     public function setImage($image)
     {
         $this->image = $image;
+    }
+
+    public function getServings()
+    {
+        return $this->servings;
+    }
+
+    public function setServings($servings)
+    {
+        $this->servings = $servings;
     }
 
     public function getIngredients()
