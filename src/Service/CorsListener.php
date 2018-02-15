@@ -5,6 +5,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpFoundation\Response;
 
 // Based on http://stackoverflow.com/a/21720357 & 
@@ -15,7 +16,7 @@ class CorsListener implements EventSubscriberInterface
 	{
 	    return array(
 	        KernelEvents::REQUEST  => array('onKernelRequest', 9999),
-	        KernelEvents::RESPONSE => array('onKernelResponse', 9999),
+	        KernelEvents::RESPONSE => array('onKernelResponse', 9999)
 	    );
 	}
 
@@ -40,12 +41,12 @@ class CorsListener implements EventSubscriberInterface
 	    }
 
 		$responseHeaders = $event->getResponse()->headers;
-	    $responseHeaders->set('Access-Control-Allow-Headers', 'origin, content-type, accept, credentials');
+	    $responseHeaders->set('Access-Control-Allow-Headers', 'origin, content-type, accept, credentials, authorization');
 	    $responseHeaders->set('Access-Control-Allow-Credentials', 'true');
 	    $responseHeaders->set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, PATCH, OPTIONS');
 
 	    $trustedDomains = ['http://localhost:5000', 'http://localhost:8080', 'https://recipe-library.herokuapp.com'];
-	    if (in_array($_SERVER['HTTP_ORIGIN'], $trustedDomains)) {
+	    if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $trustedDomains)) {
 	    	$responseHeaders->set('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
 	    }
 	}

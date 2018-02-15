@@ -29,13 +29,27 @@ class RecipeController extends Controller
 		$this->serializer = new Serializer($normalizers, $encoders);
     }
 
+    /**
+     * @Route("/api/recipes/all")
+     * @Method("GET")
+     */
+    public function allRecipesAction() {
+        $repository = $this->getDoctrine()->getRepository(Recipe::class);
+        $recipes = $repository->findAll();
+
+        $json = $this->serializer->serialize($recipes, 'json');
+        return new Response($json);
+    }
+
 	/**
-     * @Route("/api/recipes")
+     * @Route("/api/recipes/my-recipes")
      * @Method("GET")
      */
     public function myRecipesAction() {
     	$repository = $this->getDoctrine()->getRepository(Recipe::class);
     	$recipes = $repository->findAll();
+
+        // TODO: filter query on user ID, obtained with $this->getUser()->getUserId()
 
 		$json = $this->serializer->serialize($recipes, 'json');
     	return new Response($json);
