@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Auth0\JWTAuthBundle\Security;
+namespace Auth0Symfony4\JWTAuthBundle\Security;
 
 use Doctrine\Common\Proxy\Exception\InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +15,7 @@ use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Http\Authentication\SimplePreAuthenticatorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationFailureHandlerInterface;
 
-use Auth0\JWTAuthBundle\Security\Core\JWTUserProviderInterface;
+use Auth0Symfony4\JWTAuthBundle\Security\Core\JWTUserProviderInterface;
 
 class JWTAuthenticator implements SimplePreAuthenticatorInterface,AuthenticationFailureHandlerInterface
 {
@@ -71,7 +71,7 @@ class JWTAuthenticator implements SimplePreAuthenticatorInterface,Authentication
     {
         // The user provider should implement JWTUserProviderInterface
         if (!$userProvider instanceof JWTUserProviderInterface) {
-            throw new InvalidArgumentException('Argument must implement interface Auth0\JWTAuthBundle\Security\Core\JWTUserProviderInterface');
+            throw new InvalidArgumentException('Argument must implement interface Auth0Symfony4\JWTAuthBundle\Security\Core\JWTUserProviderInterface');
         }
 
         if ($token->getCredentials() === null) {

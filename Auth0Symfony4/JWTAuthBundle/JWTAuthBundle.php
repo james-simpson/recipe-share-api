@@ -1,13 +1,13 @@
 <?php
 
-namespace Auth0\JWTAuthBundle;
+namespace Auth0Symfony4\JWTAuthBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\HttpKernel\Kernel;
 
 use Auth0\SDK\API\Helpers\ApiClient;
 use Auth0\SDK\API\Helpers\InformationHeaders;
-use Auth0\JWTAuthBundle\DependencyInjection\Auth0Extension;
+use Auth0Symfony4\JWTAuthBundle\DependencyInjection\Auth0Extension;
 
 class JWTAuthBundle extends Bundle
 {

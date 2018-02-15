@@ -1,6 +1,6 @@
 <?php
 
-namespace Auth0\JWTAuthBundle\Security\Core;
+namespace Auth0Symfony4\JWTAuthBundle\Security\Core;
 
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 

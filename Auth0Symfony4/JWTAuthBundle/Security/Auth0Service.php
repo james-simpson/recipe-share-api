@@ -1,6 +1,6 @@
 <?php
 
-namespace Auth0\JWTAuthBundle\Security;
+namespace Auth0Symfony4\JWTAuthBundle\Security;
 
 use Auth0\SDK\Helpers\Cache\CacheHandler;
 use Auth0\SDK\JWTVerifier;

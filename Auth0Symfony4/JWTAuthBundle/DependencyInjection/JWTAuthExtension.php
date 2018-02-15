@@ -1,6 +1,6 @@
 <?php
 
-namespace Auth0\JWTAuthBundle\DependencyInjection;
+namespace Auth0Symfony4\JWTAuthBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
