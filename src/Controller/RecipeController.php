@@ -34,7 +34,7 @@ class RecipeController extends Controller
      * @Method("GET")
      */
     public function allRecipesAction() {
-        $repository = $this->getDoctrine()->getRepository(Recipe::class);
+    	$repository = $this->getDoctrine()->getRepository(Recipe::class);
         $recipes = $repository->findAll();
 
         $json = $this->serializer->serialize($recipes, 'json');
@@ -46,10 +46,10 @@ class RecipeController extends Controller
      * @Method("GET")
      */
     public function myRecipesAction() {
-    	$repository = $this->getDoctrine()->getRepository(Recipe::class);
-    	$recipes = $repository->findAll();
-
-        // TODO: filter query on user ID, obtained with $this->getUser()->getUserId()
+	    $repository = $this->getDoctrine()->getRepository(Recipe::class);
+    	$recipes = $repository->findBy(
+			['userId' => $this->getUser()->getUserId()]
+		);
 
 		$json = $this->serializer->serialize($recipes, 'json');
     	return new Response($json);
@@ -64,6 +64,7 @@ class RecipeController extends Controller
 
     	$recipeJson = $request->getContent();
 		$recipe = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+		$recipe->setUserId($this->getUser()->getUserId());
 
 		$db->persist($recipe);
 		$db->flush();
@@ -79,15 +80,15 @@ class RecipeController extends Controller
     	$db = $this->getDoctrine()->getManager();
 	    $recipe = $db->getRepository(Recipe::class)->find($id);
 
-	    if (!$recipe) {
-	        throw $this->createNotFoundException('No recipe found for id ' . $id);
-	    }
+		if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+			throw new AccessDeniedException('This recipe belongs to a different user');
+		}
 
 	    $recipeJson = $request->getContent();
-		$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
-		$recipe->fromArray($updated->toArray());
-		$db->persist($recipe);
-		$db->flush();
+			$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+			$recipe->fromArray($updated->toArray());
+			$db->persist($recipe);
+			$db->flush();
 
     	return new JsonResponse(array('status' => 'success'));
     }
@@ -99,10 +100,14 @@ class RecipeController extends Controller
     public function deleteRecipeAction($id) {
     	$db = $this->getDoctrine()->getManager();
 
+		if ($this->getUser()->getUserId() !== $id) {
+			throw new AccessDeniedException('This recipe belongs to a different user');
+		}
+
     	try {
     		$recipe = $db->getRepository(Recipe::class)->find($id);
 	    	$db->remove($recipe);
-			$db->flush();
+				$db->flush();
     	} catch (Exception $e) {
     		// TODO add logging
     		return new JsonResponse(array('status' => 'failed'));
@@ -116,10 +121,14 @@ class RecipeController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function uploadImageAction($id, Request $request) {
+		if ($this->getUser()->getUserId() !== $id) {
+			throw new AccessDeniedException('This recipe belongs to a different user');
+		}
+
         try {
             $file = $request->files->get('file');
         } catch ( Exception $e ) {
-            return new JsonResponse([], 400);
+	       	return new JsonResponse([], 400);
         }
 
         // name the file with a unique id
@@ -130,10 +139,10 @@ class RecipeController extends Controller
         $s3 = S3Client::factory(['version' => 'latest', 'region' => 'eu-west-2', 'signature' => 'v4']);
         $bucket = getenv('S3_BUCKET');
         $upload = $s3->upload(
-            $bucket,
-            $fileName,
-            fopen($file, 'rb'),
-            'public-read'
+	    	$bucket,
+	    	$fileName,
+        	fopen($file, 'rb'),
+        	'public-read'
         );
 
         return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));

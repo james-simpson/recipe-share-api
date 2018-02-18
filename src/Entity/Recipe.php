@@ -17,6 +17,11 @@ class Recipe
     private $id;
 
     /**
+     * @ORM\Column(type="text")
+     */
+    private $userId;
+
+    /**
      * @ORM\Column(type="string", length=100)
      */
     private $title;
@@ -79,6 +84,16 @@ class Recipe
     public function setId($id)
     {
         $this->id = $id;
+    }
+
+    public function getUserId()
+    {
+        return $this->userId;
+    }
+
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
     }
 
     public function getTitle()
