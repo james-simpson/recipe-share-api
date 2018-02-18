@@ -48,7 +48,8 @@ class RecipeController extends Controller
     public function myRecipesAction() {
 	    $repository = $this->getDoctrine()->getRepository(Recipe::class);
     	$recipes = $repository->findBy(
-			['userId' => $this->getUser()->getUserId()]
+			['userId' => $this->getUser()->getUserId()],
+			['id' => 'DESC']
 		);
 
 		$json = $this->serializer->serialize($recipes, 'json');
