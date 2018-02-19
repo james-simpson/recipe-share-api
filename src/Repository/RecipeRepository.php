@@ -17,16 +17,12 @@ class RecipeRepository extends ServiceEntityRepository
         return $this->findBy([], ['id' => 'DESC']);
     }
 
-    /*
-    public function findBySomething($value)
-    {
-        return $this->createQueryBuilder('r')
-            ->where('r.something = :value')->setParameter('value', $value)
-            ->orderBy('r.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+    public function searchByTitle($title) {
+        return $this->createQueryBuilder('x')
+           ->where('x.title LIKE :title')
+           ->orderBy('x.id', 'DESC')
+           ->setParameter('title', '%' . $title . '%')
+           ->getQuery()
+           ->getResult();
     }
-    */
 }

@@ -20,6 +20,7 @@ use App\Entity\Recipe;
 
 class RecipeController extends Controller
 {
+	// serializer for converting JSON to an entity
 	private $serializer;
 
 	public function __construct()
@@ -34,8 +35,7 @@ class RecipeController extends Controller
      * @Method("GET")
      */
     public function allRecipesAction() {
-    	$repository = $this->getDoctrine()->getRepository(Recipe::class);
-        $recipes = $repository->findAll();
+        $recipes = $this->getRepo()->findAll();
 
         $json = $this->serializer->serialize($recipes, 'json');
         return new Response($json);
@@ -46,11 +46,22 @@ class RecipeController extends Controller
      * @Method("GET")
      */
     public function myRecipesAction() {
-	    $repository = $this->getDoctrine()->getRepository(Recipe::class);
-    	$recipes = $repository->findBy(
+    	$recipes = $this->getRepo()->findBy(
 			['userId' => $this->getUser()->getUserId()],
 			['id' => 'DESC']
 		);
+
+		$json = $this->serializer->serialize($recipes, 'json');
+    	return new Response($json);
+    }
+
+	/**
+     * @Route("/api/recipes/all/search")
+     * @Method("GET")
+     */
+    public function searchAllRecipesAction(Request $request) {
+		$searchTerm = $request->query->get('searchTerm');
+    	$recipes = $this->getRepo()->searchByTitle($searchTerm);
 
 		$json = $this->serializer->serialize($recipes, 'json');
     	return new Response($json);
@@ -78,18 +89,19 @@ class RecipeController extends Controller
      * @Method({"PUT", "OPTIONS"})
      */
     public function updateRecipeAction($id, Request $request) {
-    	$db = $this->getDoctrine()->getManager();
-	    $recipe = $db->getRepository(Recipe::class)->find($id);
+	    $recipe = $this->getRepo()->find($id);
 
 		if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
 			throw new AccessDeniedException('This recipe belongs to a different user');
 		}
 
 	    $recipeJson = $request->getContent();
-			$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
-			$recipe->fromArray($updated->toArray());
-			$db->persist($recipe);
-			$db->flush();
+		$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+		$recipe->fromArray($updated->toArray());
+
+		$entityManager = $this->getDoctrine()->getManager();
+		$entityManager->persist($recipe);
+		$entityManager->flush();
 
     	return new JsonResponse(array('status' => 'success'));
     }
@@ -99,16 +111,16 @@ class RecipeController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteRecipeAction($id) {
-    	$db = $this->getDoctrine()->getManager();
-
-		if ($this->getUser()->getUserId() !== $id) {
-			throw new AccessDeniedException('This recipe belongs to a different user');
-		}
+    	$entityManager = $this->getDoctrine()->getManager();
 
     	try {
-    		$recipe = $db->getRepository(Recipe::class)->find($id);
-	    	$db->remove($recipe);
-				$db->flush();
+    		$recipe = $this->getRepo()->find($id);
+			if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+				throw new AccessDeniedException('This recipe belongs to a different user');
+			}
+
+	    	$entityManager->remove($recipe);
+			$entityManager->flush();
     	} catch (Exception $e) {
     		// TODO add logging
     		return new JsonResponse(array('status' => 'failed'));
@@ -148,4 +160,9 @@ class RecipeController extends Controller
 
         return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));
     }
+
+	// gets an instance of the recipe repository
+	private function getRepo() {
+		return $this->getDoctrine()->getRepository(Recipe::class);
+	}
 }
