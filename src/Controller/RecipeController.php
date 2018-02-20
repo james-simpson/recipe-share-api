@@ -130,14 +130,10 @@ class RecipeController extends Controller
     }
 
     /**
-     * @Route("/api/recipes/{id}/image")
+     * @Route("/api/upload-image")
      * @Method({"POST", "OPTIONS"})
      */
-    public function uploadImageAction($id, Request $request) {
-		if ($this->getUser()->getUserId() !== $id) {
-			throw new AccessDeniedException('This recipe belongs to a different user');
-		}
-
+    public function uploadImageAction(Request $request) {
         try {
             $file = $request->files->get('file');
         } catch ( Exception $e ) {
