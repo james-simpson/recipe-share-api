@@ -35,10 +35,15 @@ class RecipeController extends Controller
      * @Route("/api/recipes/all")
      * @Method("GET")
      */
-    public function allRecipesAction() {
-        $recipes = $this->getRepo()->findAll();
+    public function allRecipesAction(Request $request) {
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
+        $recipes = $this->getRepo()->findAll($startPage, $pageSize);
+		$count = $this->getRepo()->totalCount();
 
-        $json = $this->serializer->serialize($recipes, 'json');
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+
+        $json = $this->serializer->serialize($returnData, 'json');
         return new Response($json);
     }
 
@@ -46,14 +51,17 @@ class RecipeController extends Controller
      * @Route("/api/recipes/my-recipes")
      * @Method("GET")
      */
-    public function myRecipesAction() {
-    	$recipes = $this->getRepo()->findBy(
-			['userId' => $this->getUser()->getUserId()],
-			['id' => 'DESC']
-		);
+    public function myRecipesAction(Request $request) {
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
+		$userId = $this->getUser()->getUserId();
 
-		$json = $this->serializer->serialize($recipes, 'json');
-    	return new Response($json);
+        $recipes = $this->getRepo()->findByUser($userId, $startPage, $pageSize);
+		$count = $this->getRepo()->countByUser($userId);
+
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+        $json = $this->serializer->serialize($returnData, 'json');
+        return new Response($json);
     }
 
 	/**
@@ -62,9 +70,14 @@ class RecipeController extends Controller
      */
     public function searchAllRecipesAction(Request $request) {
 		$searchTerm = $request->query->get('searchTerm');
-    	$recipes = $this->getRepo()->searchByTitle($searchTerm);
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
 
-		$json = $this->serializer->serialize($recipes, 'json');
+    	$recipes = $this->getRepo()->searchByTitle($searchTerm, $startPage, $pageSize);
+		$count = $this->getRepo()->countByTitleSearch($searchTerm);
+
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+		$json = $this->serializer->serialize($returnData, 'json');
     	return new Response($json);
     }
 
