@@ -65,6 +65,16 @@ class RecipeController extends Controller
     }
 
 	/**
+     * @Route("/api/recipes/{id}")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getRecipeAction($id) {
+        $recipe = $this->getRepo()->find($id);
+        $json = $this->serializer->serialize($recipe, 'json');
+        return new Response($json);
+    }
+
+	/**
      * @Route("/api/recipes/all/search")
      * @Method("GET")
      */

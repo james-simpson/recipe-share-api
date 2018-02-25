@@ -11,8 +11,8 @@ security:
             simple_preauth:
                 authenticator: jwt_auth.jwt_authenticator
 
-    # Protect all API routes except api/recipes/all
     access_control:
-        - { path: ^/api/recipes/all, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/recipes/all/search, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # Protect all API routes except for GET requests (excluding GET api/recipes/my-recipes)
+        - { path: ^/api/recipes/my-recipes, roles: ROLE_OAUTH_AUTHENTICATED }
+        - { path: ^/api/recipes/*, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET, OPTIONS] }
         - { path: ^/api/recipes/*, roles: ROLE_OAUTH_AUTHENTICATED }
