@@ -22,3 +22,7 @@ services:
     App\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
+
+    a0_user_provider:
+        class: App\Security\A0UserProvider
+        arguments: ["@jwt_auth.auth0_service"]

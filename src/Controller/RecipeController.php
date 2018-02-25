@@ -13,11 +13,15 @@ use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+
+use Aws\S3\S3Client;
 
 use App\Entity\Recipe;
 
 class RecipeController extends Controller
 {
+	// serializer for converting JSON to an entity
 	private $serializer;
 
 	public function __construct()
@@ -27,15 +31,63 @@ class RecipeController extends Controller
 		$this->serializer = new Serializer($normalizers, $encoders);
     }
 
-	/**
-     * @Route("/api/recipes")
+    /**
+     * @Route("/api/recipes/all")
      * @Method("GET")
      */
-    public function myRecipesAction() {
-    	$repository = $this->getDoctrine()->getRepository(Recipe::class);
-    	$recipes = $repository->findAll();
+    public function allRecipesAction(Request $request) {
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
+        $recipes = $this->getRepo()->findAll($startPage, $pageSize);
+		$count = $this->getRepo()->totalCount();
 
-		$json = $this->serializer->serialize($recipes, 'json');
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+
+        $json = $this->serializer->serialize($returnData, 'json');
+        return new Response($json);
+    }
+
+	/**
+     * @Route("/api/recipes/my-recipes")
+     * @Method("GET")
+     */
+    public function myRecipesAction(Request $request) {
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
+		$userId = $this->getUser()->getUserId();
+
+        $recipes = $this->getRepo()->findByUser($userId, $startPage, $pageSize);
+		$count = $this->getRepo()->countByUser($userId);
+
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+        $json = $this->serializer->serialize($returnData, 'json');
+        return new Response($json);
+    }
+
+	/**
+     * @Route("/api/recipes/{id}")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getRecipeAction($id) {
+        $recipe = $this->getRepo()->find($id);
+        $json = $this->serializer->serialize($recipe, 'json');
+        return new Response($json);
+    }
+
+	/**
+     * @Route("/api/recipes/all/search")
+     * @Method("GET")
+     */
+    public function searchAllRecipesAction(Request $request) {
+		$searchTerm = $request->query->get('searchTerm');
+		$startPage = $request->query->get('startPage');
+		$pageSize = $request->query->get('pageSize');
+
+    	$recipes = $this->getRepo()->searchByTitle($searchTerm, $startPage, $pageSize);
+		$count = $this->getRepo()->countByTitleSearch($searchTerm);
+
+		$returnData = ['recipes' => $recipes, 'count' => $count];
+		$json = $this->serializer->serialize($returnData, 'json');
     	return new Response($json);
     }
 
@@ -48,6 +100,7 @@ class RecipeController extends Controller
 
     	$recipeJson = $request->getContent();
 		$recipe = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+		$recipe->setUserId($this->getUser()->getUserId());
 
 		$db->persist($recipe);
 		$db->flush();
@@ -60,18 +113,19 @@ class RecipeController extends Controller
      * @Method({"PUT", "OPTIONS"})
      */
     public function updateRecipeAction($id, Request $request) {
-    	$db = $this->getDoctrine()->getManager();
-	    $recipe = $db->getRepository(Recipe::class)->find($id);
+	    $recipe = $this->getRepo()->find($id);
 
-	    if (!$recipe) {
-	        throw $this->createNotFoundException('No recipe found for id ' . $id);
-	    }
+		if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+			throw new AccessDeniedException('This recipe belongs to a different user');
+		}
 
 	    $recipeJson = $request->getContent();
 		$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
 		$recipe->fromArray($updated->toArray());
-		$db->persist($recipe);
-		$db->flush();
+
+		$entityManager = $this->getDoctrine()->getManager();
+		$entityManager->persist($recipe);
+		$entityManager->flush();
 
     	return new JsonResponse(array('status' => 'success'));
     }
@@ -81,12 +135,16 @@ class RecipeController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteRecipeAction($id) {
-    	$db = $this->getDoctrine()->getManager();
+    	$entityManager = $this->getDoctrine()->getManager();
 
     	try {
-    		$recipe = $db->getRepository(Recipe::class)->find($id);
-	    	$db->remove($recipe);
-			$db->flush();
+    		$recipe = $this->getRepo()->find($id);
+			if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+				throw new AccessDeniedException('This recipe belongs to a different user');
+			}
+
+	    	$entityManager->remove($recipe);
+			$entityManager->flush();
     	} catch (Exception $e) {
     		// TODO add logging
     		return new JsonResponse(array('status' => 'failed'));
@@ -94,4 +152,37 @@ class RecipeController extends Controller
 
     	return new JsonResponse(array('status' => 'success'));
     }
+
+    /**
+     * @Route("/api/upload-image")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function uploadImageAction(Request $request) {
+        try {
+            $file = $request->files->get('file');
+        } catch ( Exception $e ) {
+	       	return new JsonResponse([], 400);
+        }
+
+        // name the file with a unique id
+        $imageId = md5(uniqid());
+        $fileName = $imageId . '.' . $file->guessExtension();
+
+        // upload the image to an Amazon S3 bucket
+        $s3 = S3Client::factory(['version' => 'latest', 'region' => 'eu-west-2', 'signature' => 'v4']);
+        $bucket = getenv('S3_BUCKET');
+        $upload = $s3->upload(
+	    	$bucket,
+	    	$fileName,
+        	fopen($file, 'rb'),
+        	'public-read'
+        );
+
+        return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));
+    }
+
+	// gets an instance of the recipe repository
+	private function getRepo() {
+		return $this->getDoctrine()->getRepository(Recipe::class);
+	}
 }

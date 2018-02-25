@@ -17,6 +17,11 @@ class Recipe
     private $id;
 
     /**
+     * @ORM\Column(type="text")
+     */
+    private $userId;
+
+    /**
      * @ORM\Column(type="string", length=100)
      */
     private $title;
@@ -30,6 +35,11 @@ class Recipe
      * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $image;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $servings;
 
     /**
      * @ORM\Column(type="text")
@@ -76,6 +86,16 @@ class Recipe
         $this->id = $id;
     }
 
+    public function getUserId()
+    {
+        return $this->userId;
+    }
+
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
+    }
+
     public function getTitle()
     {
         return $this->title;
@@ -104,6 +124,16 @@ class Recipe
     public function setImage($image)
     {
         $this->image = $image;
+    }
+
+    public function getServings()
+    {
+        return $this->servings;
+    }
+
+    public function setServings($servings)
+    {
+        $this->servings = $servings;
     }
 
     public function getIngredients()
@@ -193,9 +223,9 @@ class Recipe
 	 * Create from array
 	 * @param $array
 	 */
-	public function fromArray($array){
+	public function fromArray($array) {
 	    foreach ($array as $name => $value) {
-	        if (isset($this->$name) && $name !== 'id'){
+	        if (property_exists($this, $name) && $name !== 'id'){
 	            $this->$name = $value;
 	        }
 	    }
