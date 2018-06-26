@@ -12,42 +12,42 @@ use Symfony\Component\HttpFoundation\Response;
 // https://www.hydrant.co.uk/journal/cors-pre-flight-requests-and-headers-symfony-httpkernel-component
 class CorsListener implements EventSubscriberInterface
 {
-	public static function getSubscribedEvents()
-	{
-	    return array(
-	        KernelEvents::REQUEST  => array('onKernelRequest', 9999),
-	        KernelEvents::RESPONSE => array('onKernelResponse', 9999)
-	    );
-	}
+    public static function getSubscribedEvents()
+    {
+        return array(
+            KernelEvents::REQUEST  => array('onKernelRequest', 9999),
+            KernelEvents::RESPONSE => array('onKernelResponse', 9999)
+        );
+    }
 
-	public function onKernelRequest(GetResponseEvent $event) {
-		// Don't do anything if it's not the master request.
-	    if (!$event->isMasterRequest()) {
-	        return;
-	    }
+    public function onKernelRequest(GetResponseEvent $event) {
+        // Don't do anything if it's not the master request.
+        if (!$event->isMasterRequest()) {
+            return;
+        }
 
-	    $request = $event->getRequest();
-	    $method  = $request->getRealMethod();
-	    if ($method == 'OPTIONS') {
-	        $response = new Response();
-	        $event->setResponse($response);
-	    }
-	}
+        $request = $event->getRequest();
+        $method  = $request->getRealMethod();
+        if ($method == 'OPTIONS') {
+            $response = new Response();
+            $event->setResponse($response);
+        }
+    }
 
-	public function onKernelResponse(FilterResponseEvent $event) {
-		// Don't do anything if it's not the master request.
-	    if (!$event->isMasterRequest()) {
-	        return;
-	    }
+    public function onKernelResponse(FilterResponseEvent $event) {
+        // Don't do anything if it's not the master request.
+        if (!$event->isMasterRequest()) {
+            return;
+        }
 
-		$responseHeaders = $event->getResponse()->headers;
-	    $responseHeaders->set('Access-Control-Allow-Headers', 'origin, content-type, accept, credentials, authorization');
-	    $responseHeaders->set('Access-Control-Allow-Credentials', 'true');
-	    $responseHeaders->set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, PATCH, OPTIONS');
+        $responseHeaders = $event->getResponse()->headers;
+        $responseHeaders->set('Access-Control-Allow-Headers', 'origin, content-type, accept, credentials, authorization');
+        $responseHeaders->set('Access-Control-Allow-Credentials', 'true');
+        $responseHeaders->set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, PATCH, OPTIONS');
 
-	    $trustedDomains = ['http://localhost:5000', 'http://localhost:8080', 'https://recipe-library.herokuapp.com'];
-	    if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $trustedDomains)) {
-	    	$responseHeaders->set('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
-	    }
-	}
+        $trustedDomains = ['http://localhost:5000', 'http://localhost:8080', 'https://recipe-library.herokuapp.com'];
+        if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $trustedDomains)) {
+            $responseHeaders->set('Access-Control-Allow-Origin', $_SERVER['HTTP_ORIGIN']);
+        }
+    }
 }

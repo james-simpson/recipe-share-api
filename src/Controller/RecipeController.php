@@ -21,14 +21,14 @@ use App\Entity\Recipe;
 
 class RecipeController extends Controller
 {
-	// serializer for converting JSON to an entity
-	private $serializer;
+    // serializer for converting JSON to an entity
+    private $serializer;
 
-	public function __construct()
+    public function __construct()
     {
         $encoders = array(new JsonEncoder());
-		$normalizers = array(new ObjectNormalizer());
-		$this->serializer = new Serializer($normalizers, $encoders);
+        $normalizers = array(new ObjectNormalizer());
+        $this->serializer = new Serializer($normalizers, $encoders);
     }
 
     /**
@@ -36,35 +36,35 @@ class RecipeController extends Controller
      * @Method("GET")
      */
     public function allRecipesAction(Request $request) {
-		$startPage = $request->query->get('startPage');
-		$pageSize = $request->query->get('pageSize');
+        $startPage = $request->query->get('startPage');
+        $pageSize = $request->query->get('pageSize');
         $recipes = $this->getRepo()->findAll($startPage, $pageSize);
-		$count = $this->getRepo()->totalCount();
+        $count = $this->getRepo()->totalCount();
 
-		$returnData = ['recipes' => $recipes, 'count' => $count];
+        $returnData = ['recipes' => $recipes, 'count' => $count];
 
         $json = $this->serializer->serialize($returnData, 'json');
         return new Response($json);
     }
 
-	/**
+    /**
      * @Route("/api/recipes/my-recipes")
      * @Method("GET")
      */
     public function myRecipesAction(Request $request) {
-		$startPage = $request->query->get('startPage');
-		$pageSize = $request->query->get('pageSize');
-		$userId = $this->getUser()->getUserId();
+        $startPage = $request->query->get('startPage');
+        $pageSize = $request->query->get('pageSize');
+        $userId = $this->getUser()->getUserId();
 
         $recipes = $this->getRepo()->findByUser($userId, $startPage, $pageSize);
-		$count = $this->getRepo()->countByUser($userId);
+        $count = $this->getRepo()->countByUser($userId);
 
-		$returnData = ['recipes' => $recipes, 'count' => $count];
+        $returnData = ['recipes' => $recipes, 'count' => $count];
         $json = $this->serializer->serialize($returnData, 'json');
         return new Response($json);
     }
 
-	/**
+    /**
      * @Route("/api/recipes/{id}")
      * @Method({"GET", "OPTIONS"})
      */
@@ -74,21 +74,21 @@ class RecipeController extends Controller
         return new Response($json);
     }
 
-	/**
+    /**
      * @Route("/api/recipes/all/search")
      * @Method("GET")
      */
     public function searchAllRecipesAction(Request $request) {
-		$searchTerm = $request->query->get('searchTerm');
-		$startPage = $request->query->get('startPage');
-		$pageSize = $request->query->get('pageSize');
+        $searchTerm = $request->query->get('searchTerm');
+        $startPage = $request->query->get('startPage');
+        $pageSize = $request->query->get('pageSize');
 
-    	$recipes = $this->getRepo()->searchByTitle($searchTerm, $startPage, $pageSize);
-		$count = $this->getRepo()->countByTitleSearch($searchTerm);
+        $recipes = $this->getRepo()->searchByTitle($searchTerm, $startPage, $pageSize);
+        $count = $this->getRepo()->countByTitleSearch($searchTerm);
 
-		$returnData = ['recipes' => $recipes, 'count' => $count];
-		$json = $this->serializer->serialize($returnData, 'json');
-    	return new Response($json);
+        $returnData = ['recipes' => $recipes, 'count' => $count];
+        $json = $this->serializer->serialize($returnData, 'json');
+        return new Response($json);
     }
 
     /**
@@ -96,16 +96,16 @@ class RecipeController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function addRecipeAction(Request $request) {
-    	$db = $this->getDoctrine()->getManager();
+        $db = $this->getDoctrine()->getManager();
 
-    	$recipeJson = $request->getContent();
-		$recipe = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
-		$recipe->setUserId($this->getUser()->getUserId());
+        $recipeJson = $request->getContent();
+        $recipe = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+        $recipe->setUserId($this->getUser()->getUserId());
 
-		$db->persist($recipe);
-		$db->flush();
+        $db->persist($recipe);
+        $db->flush();
 
-    	return new JsonResponse(array('status' => 'success', 'id' => $recipe->getId()));
+        return new JsonResponse(array('status' => 'success', 'id' => $recipe->getId()));
     }
 
     /**
@@ -113,21 +113,21 @@ class RecipeController extends Controller
      * @Method({"PUT", "OPTIONS"})
      */
     public function updateRecipeAction($id, Request $request) {
-	    $recipe = $this->getRepo()->find($id);
+        $recipe = $this->getRepo()->find($id);
 
-		if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
-			throw new AccessDeniedException('This recipe belongs to a different user');
-		}
+        if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+            throw new AccessDeniedException('This recipe belongs to a different user');
+        }
 
-	    $recipeJson = $request->getContent();
-		$updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
-		$recipe->fromArray($updated->toArray());
+        $recipeJson = $request->getContent();
+        $updated = $this->serializer->deserialize($recipeJson, Recipe::class, 'json');
+        $recipe->fromArray($updated->toArray());
 
-		$entityManager = $this->getDoctrine()->getManager();
-		$entityManager->persist($recipe);
-		$entityManager->flush();
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($recipe);
+        $entityManager->flush();
 
-    	return new JsonResponse(array('status' => 'success'));
+        return new JsonResponse(array('status' => 'success'));
     }
 
     /**
@@ -135,22 +135,22 @@ class RecipeController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteRecipeAction($id) {
-    	$entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->getDoctrine()->getManager();
 
-    	try {
-    		$recipe = $this->getRepo()->find($id);
-			if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
-				throw new AccessDeniedException('This recipe belongs to a different user');
-			}
+        try {
+            $recipe = $this->getRepo()->find($id);
+            if ($this->getUser()->getUserId() !== $recipe->getUserId()) {
+                throw new AccessDeniedException('This recipe belongs to a different user');
+            }
 
-	    	$entityManager->remove($recipe);
-			$entityManager->flush();
-    	} catch (Exception $e) {
-    		// TODO add logging
-    		return new JsonResponse(array('status' => 'failed'));
-    	}
+            $entityManager->remove($recipe);
+            $entityManager->flush();
+        } catch (Exception $e) {
+            // TODO add logging
+            return new JsonResponse(array('status' => 'failed'));
+        }
 
-    	return new JsonResponse(array('status' => 'success'));
+        return new JsonResponse(array('status' => 'success'));
     }
 
     /**
@@ -161,7 +161,7 @@ class RecipeController extends Controller
         try {
             $file = $request->files->get('file');
         } catch ( Exception $e ) {
-	       	return new JsonResponse([], 400);
+               return new JsonResponse([], 400);
         }
 
         // name the file with a unique id
@@ -172,17 +172,17 @@ class RecipeController extends Controller
         $s3 = S3Client::factory(['version' => 'latest', 'region' => 'eu-west-2', 'signature' => 'v4']);
         $bucket = getenv('S3_BUCKET');
         $upload = $s3->upload(
-	    	$bucket,
-	    	$fileName,
-        	fopen($file, 'rb'),
-        	'public-read'
+            $bucket,
+            $fileName,
+            fopen($file, 'rb'),
+            'public-read'
         );
 
         return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));
     }
 
-	// gets an instance of the recipe repository
-	private function getRepo() {
-		return $this->getDoctrine()->getRepository(Recipe::class);
-	}
+    // gets an instance of the recipe repository
+    private function getRepo() {
+        return $this->getDoctrine()->getRepository(Recipe::class);
+    }
 }

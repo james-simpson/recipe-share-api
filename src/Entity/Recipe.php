@@ -207,27 +207,27 @@ class Recipe
     }
 
     /**
-	 * Represent as array
-	 * @return array
-	 */
-	public function toArray(){
-	    $properties = [];
-	    foreach ($this as $name => $value) {
-	        $properties[$name] = $value;
-	    }
+     * Represent as array
+     * @return array
+     */
+    public function toArray(){
+        $properties = [];
+        foreach ($this as $name => $value) {
+            $properties[$name] = $value;
+        }
 
-	    return $properties;
-	}
+        return $properties;
+    }
 
-	/**
-	 * Create from array
-	 * @param $array
-	 */
-	public function fromArray($array) {
-	    foreach ($array as $name => $value) {
-	        if (property_exists($this, $name) && $name !== 'id'){
-	            $this->$name = $value;
-	        }
-	    }
-	}
+    /**
+     * Create from array
+     * @param $array
+     */
+    public function fromArray($array) {
+        foreach ($array as $name => $value) {
+            if (property_exists($this, $name) && $name !== 'id'){
+                $this->$name = $value;
+            }
+        }
+    }
 }
