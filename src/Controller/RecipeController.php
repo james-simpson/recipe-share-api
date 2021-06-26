@@ -181,6 +181,28 @@ class RecipeController extends Controller
         return new JsonResponse(array('imageUrl' => $upload->get('ObjectURL')));
     }
 
+    /**
+     * @Route("/api/shopping-list/{ids}")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getShoppingList($ids) {        
+        $idsArray = explode(",", $ids);
+        if (!$idsArray) {
+            return new JsonResponse();
+        }
+        $allIngredients = [];
+        $titles = [];
+        foreach ($idsArray as $id) {
+            $recipe = $this->getRepo()->find($id);
+            $ingredients = $recipe->getIngredients();
+            $titles[] = $recipe->getTitle();
+            $ingredientsArray = array_map('trim', explode("\n", $ingredients));
+            $allIngredients = array_merge($allIngredients, $ingredientsArray);
+        }
+        
+        return new JsonResponse(['ingredients' => $allIngredients, 'titles' => $titles]);
+    }
+
     // gets an instance of the recipe repository
     private function getRepo() {
         return $this->getDoctrine()->getRepository(Recipe::class);
