@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\InvalidArgumentException;
 
 use Aws\S3\S3Client;
 
@@ -182,14 +183,14 @@ class RecipeController extends Controller
     }
 
     /**
-     * @Route("/api/shopping-list/{ids}")
+     * @Route("/api/shopping-list/{ids}", defaults={"ids"=""}))
      * @Method({"GET", "OPTIONS"})
      */
-    public function getShoppingList($ids) {        
-        $idsArray = explode(",", $ids);
-        if (!$idsArray) {
-            return new JsonResponse();
+    public function getShoppingList($ids) { 
+        if (!$ids) {
+            return new JsonResponse([], 400);
         }
+        $idsArray = explode(",", $ids);
         $allIngredients = [];
         $titles = [];
         foreach ($idsArray as $id) {
