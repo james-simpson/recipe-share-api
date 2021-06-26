@@ -183,13 +183,10 @@ class RecipeController extends Controller
     }
 
     /**
-     * @Route("/api/shopping-list/{ids}", defaults={"ids"=""}))
+     * @Route("/api/shopping-list/{ids}")
      * @Method({"GET", "OPTIONS"})
      */
     public function getShoppingList($ids) { 
-        if (!$ids) {
-            return new JsonResponse([], 400);
-        }
         $idsArray = explode(",", $ids);
         $allIngredients = [];
         $titles = [];
